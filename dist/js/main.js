@@ -120,6 +120,14 @@
 
 })();
  
+angular.module("config", [])
+.constant("BUCKET_SLUG", "dda78280-e634-11e7-b7f0-25517ee21796")
+.constant("MEDIA_URL", "https://api.cosmicjs.com/v1/dda78280-e634-11e7-b7f0-25517ee21796/media")
+.constant("URL", "https://api.cosmicjs.com/v1/")
+.constant("READ_KEY", "")
+.constant("WRITE_KEY", "")
+.constant("STRIPE_KEY", "");
+
 (function () {
     'use strict'; 
 
@@ -182,122 +190,6 @@
 
 })();
  
-(function () {
-    'use strict'; 
-
-    angular
-        .module('main')
-        .controller('AuthCtrl', AuthCtrl);
-
-    function AuthCtrl(crAcl, $state, AuthService, Flash, $log) {
-        var vm = this;              
-
-        vm.login = login;
-        
-        vm.showRegisterForm = false;
-        
-        vm.loginForm = null;
-        
-        vm.credentials = {};
-        vm.user = {};
-
-        function login(credentials) {
-            function success(response) {
-                function success(response) {
-                    if (response.data.status !== 'empty') {
-                        var currentUser = response.data.objects[0];
-
-                        crAcl.setRole(currentUser.metadata.role);
-                        AuthService.setCredentials(currentUser);
-                        $state.go('admin.watches');
-                    }
-                    else
-                        Flash.create('danger', 'Incorrect username or password');
-                }
-
-                function failed(response) {
-                    $log.error(response);
-                }
-
-                if (response.data.status !== 'empty')
-                    AuthService
-                        .checkPassword(credentials)
-                        .then(success, failed);
-                else
-                    Flash.create('danger', 'Incorrect username or password');
-
-                $log.info(response);
-            }
-
-            function failed(response) {
-                $log.error(response);
-            }
-
-            if (vm.loginForm.$valid)
-                AuthService
-                    .checkUsername(credentials)
-                    .then(success, failed);
-        }
-
-    }
-})();
-
-(function () {
-    'use strict';
-
-    angular
-        .module('main')
-        .service('AuthService', function ($http, 
-                                          $cookieStore, 
-                                          $q, 
-                                          $rootScope, 
-                                          URL, BUCKET_SLUG, READ_KEY, WRITE_KEY) {
-            var authService = this;
-            $http.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
-            authService.checkUsername = function (credentials) {
-                return $http.get(URL + BUCKET_SLUG + '/object-type/users/search', {
-                    params: {
-                        metafield_key: 'email',
-                        metafield_value_has: credentials.email,
-                        limit: 1,
-                        read_key: READ_KEY
-                    }
-                });
-            };
-            authService.checkPassword = function (credentials) {
-                return $http.get(URL + BUCKET_SLUG + '/object-type/users/search', {
-                    ignoreLoadingBar: true,
-                    params: {
-                        metafield_key: 'password',
-                        metafield_value: credentials.password,
-                        limit: 1,
-                        read_key: READ_KEY
-                    }
-                });
-            };
-            authService.setCredentials = function (user) { 
-                $rootScope.globals = {
-                    currentUser: user
-                };
-                
-                $cookieStore.put('globals', $rootScope.globals);
-            };
-            authService.clearCredentials = function () {
-                var deferred = $q.defer();
-                $cookieStore.remove('globals');
-
-                if (!$cookieStore.get('globals')) {
-                    $rootScope.globals = {};
-                    deferred.resolve('Credentials clear success');
-                } else {
-                    deferred.reject('Can\'t clear credentials');
-                }
-
-                return deferred.promise;
-            };
-        });  
-})();  
 (function () {
     'use strict'; 
 
@@ -616,52 +508,6 @@
             };
         });  
 })();  
-angular.module("config", [])
-.constant("BUCKET_SLUG", "dda78280-e634-11e7-b7f0-25517ee21796")
-.constant("MEDIA_URL", "https://api.cosmicjs.com/v1/dda78280-e634-11e7-b7f0-25517ee21796/media")
-.constant("URL", "https://api.cosmicjs.com/v1/")
-.constant("READ_KEY", "")
-.constant("WRITE_KEY", "")
-.constant("STRIPE_KEY", "");
-
-(function () {
-    'use strict';
-
-    angular
-        .module('main')
-        .service('UserService', function ($http, 
-                                          $cookieStore, 
-                                          $q, 
-                                          $rootScope, 
-                                          URL, BUCKET_SLUG, READ_KEY, WRITE_KEY) {
-            $http.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
-            this.getCurrentUser = function (ignoreLoadingBar) {
-                return $http.get(URL + BUCKET_SLUG + '/object/' + $rootScope.globals.currentUser.slug, {
-                    ignoreLoadingBar: ignoreLoadingBar,
-                    params: {
-                        read_key: READ_KEY
-                    }
-                });
-            };
-            this.getUser = function (slug, ignoreLoadingBar) {
-                return $http.get(URL + BUCKET_SLUG + '/object/' + slug, {
-                    ignoreLoadingBar: ignoreLoadingBar,
-                    params: {
-                        read_key: READ_KEY
-                    }
-                });
-            };
-            this.updateUser = function (user) {
-                user.write_key = WRITE_KEY;
-
-                return $http.put(URL + BUCKET_SLUG + '/edit-object', user, {
-                    ignoreLoadingBar: false
-                });
-            };
-
-        });  
-})();  
 (function () {
     'use strict'; 
 
@@ -937,6 +783,403 @@ angular.module("config", [])
         });
 })();  
 (function () {
+    'use strict';
+    
+    angular
+        .module('admin.watches', [
+            'admin.watches.edit',
+            'admin.watches.add'
+        ])
+        .config(config);
+
+    config.$inject = ['$stateProvider', '$urlRouterProvider'];
+    function config($stateProvider, $urlRouterProvider) {
+ 
+        $stateProvider
+            .state('admin.watches', {
+                url: 'watches?key&value',
+                templateUrl: '../views/admin/admin.watches.html',
+                controller: 'WatchCtrl as vm',
+                data: {
+                    is_granted: ['ROLE_ADMIN']
+                }
+            });
+    }
+    
+})();
+ 
+(function () {
+    'use strict'; 
+
+    angular
+        .module('main')
+        .controller('AuthCtrl', AuthCtrl);
+
+    function AuthCtrl(crAcl, $state, AuthService, Flash, $log) {
+        var vm = this;              
+
+        vm.login = login;
+        
+        vm.showRegisterForm = false;
+        
+        vm.loginForm = null;
+        
+        vm.credentials = {};
+        vm.user = {};
+
+        function login(credentials) {
+            function success(response) {
+                function success(response) {
+                    if (response.data.status !== 'empty') {
+                        var currentUser = response.data.objects[0];
+
+                        crAcl.setRole(currentUser.metadata.role);
+                        AuthService.setCredentials(currentUser);
+                        $state.go('admin.watches');
+                    }
+                    else
+                        Flash.create('danger', 'Incorrect username or password');
+                }
+
+                function failed(response) {
+                    $log.error(response);
+                }
+
+                if (response.data.status !== 'empty')
+                    AuthService
+                        .checkPassword(credentials)
+                        .then(success, failed);
+                else
+                    Flash.create('danger', 'Incorrect username or password');
+
+                $log.info(response);
+            }
+
+            function failed(response) {
+                $log.error(response);
+            }
+
+            if (vm.loginForm.$valid)
+                AuthService
+                    .checkUsername(credentials)
+                    .then(success, failed);
+        }
+
+    }
+})();
+
+(function () {
+    'use strict';
+
+    angular
+        .module('main')
+        .service('AuthService', function ($http, 
+                                          $cookieStore, 
+                                          $q, 
+                                          $rootScope, 
+                                          URL, BUCKET_SLUG, READ_KEY, WRITE_KEY) {
+            var authService = this;
+            $http.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+            authService.checkUsername = function (credentials) {
+                return $http.get(URL + BUCKET_SLUG + '/object-type/users/search', {
+                    params: {
+                        metafield_key: 'email',
+                        metafield_value_has: credentials.email,
+                        limit: 1,
+                        read_key: READ_KEY
+                    }
+                });
+            };
+            authService.checkPassword = function (credentials) {
+                return $http.get(URL + BUCKET_SLUG + '/object-type/users/search', {
+                    ignoreLoadingBar: true,
+                    params: {
+                        metafield_key: 'password',
+                        metafield_value: credentials.password,
+                        limit: 1,
+                        read_key: READ_KEY
+                    }
+                });
+            };
+            authService.setCredentials = function (user) { 
+                $rootScope.globals = {
+                    currentUser: user
+                };
+                
+                $cookieStore.put('globals', $rootScope.globals);
+            };
+            authService.clearCredentials = function () {
+                var deferred = $q.defer();
+                $cookieStore.remove('globals');
+
+                if (!$cookieStore.get('globals')) {
+                    $rootScope.globals = {};
+                    deferred.resolve('Credentials clear success');
+                } else {
+                    deferred.reject('Can\'t clear credentials');
+                }
+
+                return deferred.promise;
+            };
+        });  
+})();  
+(function () {
+    'use strict';
+
+    angular
+        .module('main')
+        .service('UserService', function ($http, 
+                                          $cookieStore, 
+                                          $q, 
+                                          $rootScope, 
+                                          URL, BUCKET_SLUG, READ_KEY, WRITE_KEY) {
+            $http.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+            this.getCurrentUser = function (ignoreLoadingBar) {
+                return $http.get(URL + BUCKET_SLUG + '/object/' + $rootScope.globals.currentUser.slug, {
+                    ignoreLoadingBar: ignoreLoadingBar,
+                    params: {
+                        read_key: READ_KEY
+                    }
+                });
+            };
+            this.getUser = function (slug, ignoreLoadingBar) {
+                return $http.get(URL + BUCKET_SLUG + '/object/' + slug, {
+                    ignoreLoadingBar: ignoreLoadingBar,
+                    params: {
+                        read_key: READ_KEY
+                    }
+                });
+            };
+            this.updateUser = function (user) {
+                user.write_key = WRITE_KEY;
+
+                return $http.put(URL + BUCKET_SLUG + '/edit-object', user, {
+                    ignoreLoadingBar: false
+                });
+            };
+
+        });  
+})();  
+(function () {
+    'use strict'; 
+
+    angular
+        .module('main')
+        .controller('WatchProfileCtrl', WatchProfileCtrl);
+
+    function WatchProfileCtrl(UserService, $stateParams, WatchService, Notification, $log, MEDIA_URL, $state) {
+        var vm = this;
+
+        vm.getWatch = getWatch;
+
+        function getWatch() {
+            function success(response) {
+                $log.info(response);
+                vm.watch = response.data.object;
+            }
+
+            function failed(response) {
+                $log.error(response);
+            }
+
+            WatchService
+                .getWatchBySlug($stateParams.slug)
+                .then(success, failed);
+        }
+
+    }
+})();
+
+(function () {
+    'use strict';
+    
+    angular
+        .module('watch.profile', [])
+        .config(config);
+
+    config.$inject = ['$stateProvider', '$urlRouterProvider'];
+    function config($stateProvider, $urlRouterProvider) {
+ 
+        $stateProvider
+            .state('main.watch.profile', {
+                url: 'phones/:slug',
+                views: {
+                    '@main': {
+                        templateUrl: '../views/watch/watch.profile.html',
+                        controller: 'WatchProfileCtrl as vm'
+                    }
+                }
+            });
+    }
+    
+})();
+ 
+(function () {
+    'use strict'; 
+
+    angular
+        .module('main')
+        .controller('AdminWatchesEdit', AdminWatchesEdit);
+
+    function AdminWatchesEdit($state, WatchService, Notification, $log, $scope, MEDIA_URL, ngDialog) {
+        var vm = this;
+
+        vm.updateWatch = updateWatch;
+        vm.cancelUpload = cancelUpload;
+        vm.upload = upload;
+
+        vm.dateBeginPicker = false;
+        vm.dateEndPicker = false;
+        vm.contentEditor = false;
+        vm.uploadProgress = [0, 0, 0];
+
+        vm.event = {};
+        vm.flow = {};
+        vm.background = {};
+
+        vm.flowConfig = {
+            target: MEDIA_URL,
+            singleFile: false
+        };
+
+        function updateWatch(watch) {
+            function success(response) {
+                $log.info(response);
+
+                Notification.primary(
+                    {
+                        message: 'Saved',
+                        delay: 800,
+                        replaceMessage: true
+                    }
+                );
+
+                $state.go('admin.watches', null, {reload: true});
+                ngDialog.close();
+            }
+
+            function failed(response) {
+                $log.error(response);
+            }
+
+
+            if (vm.flow.files.length &&
+                vm.uploadProgress[0] === 100 &&
+                vm.uploadProgress[1] === 100 &&
+                vm.uploadProgress[2] === 100)
+                WatchService
+                    .updateWatch(watch)
+                    .then(success, failed);
+            else
+                WatchService
+                    .updateWatch(watch)
+                    .then(success, failed);
+        }
+
+        function cancelUpload() {
+            vm.flow.cancel();
+            vm.background = {
+                'background-image': 'url(' + (vm.event.metafields[0].value ? vm.event.metafields[0].url : DEFAULT_EVENT_IMAGE) + ')'
+            };
+        }
+
+        $scope.$watch('vm.flow.files[0].file.name', function () {
+            if (!vm.flow.files[0]) {
+                return ;
+            }
+            var fileReader = new FileReader();
+            fileReader.readAsDataURL(vm.flow.files[0].file);
+            fileReader.onload = function (event) {
+                $scope.$apply(function () {
+                    vm.image = {
+                        'background-image': 'url(' + event.target.result + ')'
+                    };
+                });
+            };
+        });
+
+        function upload() {
+            vm.flow.files.forEach(function (item, i) {
+                if (i < 3)
+                    WatchService
+                        .upload(item.file)
+                        .then(function(response){
+
+                            $scope.ngDialogData.metafields[11].children[i].value = response.media.name;
+
+                        }, function(){
+                            console.log('failed :(');
+                        }, function(progress){
+                            vm.uploadProgress[i] = progress;
+                        });
+            });
+
+        }
+
+    }
+})();
+
+(function () {
+    'use strict';
+    
+    angular
+        .module('admin.watches.edit', [])
+        .config(config);
+
+    config.$inject = ['$stateProvider', '$urlRouterProvider'];
+    function config($stateProvider, $urlRouterProvider) {
+ 
+        $stateProvider
+            .state('admin.watches.edit', {
+                url: '/edit/:slug',
+                onEnter: [
+                'ngDialog',
+                'WatchService',
+                '$stateParams',
+                '$state',
+                '$log',
+                function (ngDialog, WatchService, $stateParams, $state, $log) {
+                    getWatch($stateParams.slug);
+    
+                    function getWatch(slug) {
+                        function success(response) {
+                            openDialog(response.data.object);
+                        }
+    
+                        function failed(response) {
+                            $log.error(response);
+                        }
+ 
+                        WatchService
+                            .getWatchBySlug(slug)
+                            .then(success, failed);
+                    }
+    
+                    function openDialog(data) {
+    
+                        var options = {
+                            templateUrl: '../views/admin/admin.watches.edit.html',
+                            data: data,
+                            controller: 'AdminWatchesEdit as vm',
+                            showClose: true
+                        };
+    
+                        ngDialog.open(options).closePromise.finally(function () {
+                            $state.go('admin.watches');
+                        });
+                    }
+                }],
+                data: {
+                    is_granted: ['ROLE_ADMIN']
+                }
+            });
+    }
+    
+})();
+ 
+(function () {
     'use strict'; 
 
     angular
@@ -1120,32 +1363,6 @@ angular.module("config", [])
     'use strict';
     
     angular
-        .module('admin.watches', [
-            'admin.watches.edit',
-            'admin.watches.add'
-        ])
-        .config(config);
-
-    config.$inject = ['$stateProvider', '$urlRouterProvider'];
-    function config($stateProvider, $urlRouterProvider) {
- 
-        $stateProvider
-            .state('admin.watches', {
-                url: 'watches?key&value',
-                templateUrl: '../views/admin/admin.watches.html',
-                controller: 'WatchCtrl as vm',
-                data: {
-                    is_granted: ['ROLE_ADMIN']
-                }
-            });
-    }
-    
-})();
- 
-(function () {
-    'use strict';
-    
-    angular
         .module('cart.checkout', [])
         .config(config); 
 
@@ -1168,116 +1385,6 @@ angular.module("config", [])
                         templateUrl: '../views/cart/cart.thank-you.html'
                     }
                 }
-            });
-    }
-})();
- 
-(function () {
-    'use strict'; 
-
-    angular
-        .module('main')
-        .controller('WatchProfileCtrl', WatchProfileCtrl);
-
-    function WatchProfileCtrl(UserService, $stateParams, WatchService, Notification, $log, MEDIA_URL, $state) {
-        var vm = this;
-
-        vm.getWatch = getWatch;
-
-        function getWatch() {
-            function success(response) {
-                $log.info(response);
-                vm.watch = response.data.object;
-            }
-
-            function failed(response) {
-                $log.error(response);
-            }
-
-            WatchService
-                .getWatchBySlug($stateParams.slug)
-                .then(success, failed);
-        }
-
-    }
-})();
-
-(function () {
-    'use strict';
-    
-    angular
-        .module('watch.profile', [])
-        .config(config);
-
-    config.$inject = ['$stateProvider', '$urlRouterProvider'];
-    function config($stateProvider, $urlRouterProvider) {
- 
-        $stateProvider
-            .state('main.watch.profile', {
-                url: 'watches/:slug',
-                views: {
-                    '@main': {
-                        templateUrl: '../views/watch/watch.profile.html',
-                        controller: 'WatchProfileCtrl as vm'
-                    }
-                }
-            });
-    }
-    
-})();
- 
-(function () {
-    'use strict';
-    
-    angular
-        .module('admin.orders.preview', [])
-        .config(config);
-
-    config.$inject = ['$stateProvider', '$urlRouterProvider'];
-    function config($stateProvider, $urlRouterProvider) {
-
-        $stateProvider
-            .state('admin.orders.preview', {
-                url: '/preview/:slug',
-                data: {
-                    is_granted: ['ROLE_ADMIN']
-                },
-                onEnter: [
-                    'ngDialog',
-                    'AdminOrdersService',
-                    '$stateParams',
-                    '$state',
-                    '$log',
-                    function (ngDialog, AdminOrdersService, $stateParams, $state, $log) {
-                        getOrder($stateParams.slug);
-
-                        function getOrder(slug) {
-                            function success(response) {
-                                openDialog(response.data.object);
-                            }
-
-                            function failed(response) {
-                                $log.error(response);
-                            }
-
-                            AdminOrdersService
-                                .getOrderBySlug(slug)
-                                .then(success, failed);
-                        }
-
-                        function openDialog(data) {
-
-                            var options = {
-                                templateUrl: '../views/admin/admin.orders.preview.html',
-                                data: data,
-                                showClose: true
-                            };
-
-                            ngDialog.open(options).closePromise.finally(function () {
-                                $state.go('admin.orders');
-                            });
-                        }
-                    }]
             });
     }
 })();
@@ -1405,165 +1512,58 @@ angular.module("config", [])
 })();
  
 (function () {
-    'use strict'; 
-
-    angular
-        .module('main')
-        .controller('AdminWatchesEdit', AdminWatchesEdit);
-
-    function AdminWatchesEdit($state, WatchService, Notification, $log, $scope, MEDIA_URL, ngDialog) {
-        var vm = this;
-
-        vm.updateWatch = updateWatch;
-        vm.cancelUpload = cancelUpload;
-        vm.upload = upload;
-
-        vm.dateBeginPicker = false;
-        vm.dateEndPicker = false;
-        vm.contentEditor = false;
-        vm.uploadProgress = [0, 0, 0];
-
-        vm.event = {};
-        vm.flow = {};
-        vm.background = {};
-
-        vm.flowConfig = {
-            target: MEDIA_URL,
-            singleFile: false
-        };
-
-        function updateWatch(watch) {
-            function success(response) {
-                $log.info(response);
-
-                Notification.primary(
-                    {
-                        message: 'Saved',
-                        delay: 800,
-                        replaceMessage: true
-                    }
-                );
-
-                $state.go('admin.watches', null, {reload: true});
-                ngDialog.close();
-            }
-
-            function failed(response) {
-                $log.error(response);
-            }
-
-
-            if (vm.flow.files.length &&
-                vm.uploadProgress[0] === 100 &&
-                vm.uploadProgress[1] === 100 &&
-                vm.uploadProgress[2] === 100)
-                WatchService
-                    .updateWatch(watch)
-                    .then(success, failed);
-            else
-                WatchService
-                    .updateWatch(watch)
-                    .then(success, failed);
-        }
-
-        function cancelUpload() {
-            vm.flow.cancel();
-            vm.background = {
-                'background-image': 'url(' + (vm.event.metafields[0].value ? vm.event.metafields[0].url : DEFAULT_EVENT_IMAGE) + ')'
-            };
-        }
-
-        $scope.$watch('vm.flow.files[0].file.name', function () {
-            if (!vm.flow.files[0]) {
-                return ;
-            }
-            var fileReader = new FileReader();
-            fileReader.readAsDataURL(vm.flow.files[0].file);
-            fileReader.onload = function (event) {
-                $scope.$apply(function () {
-                    vm.image = {
-                        'background-image': 'url(' + event.target.result + ')'
-                    };
-                });
-            };
-        });
-
-        function upload() {
-            vm.flow.files.forEach(function (item, i) {
-                if (i < 3)
-                    WatchService
-                        .upload(item.file)
-                        .then(function(response){
-
-                            $scope.ngDialogData.metafields[11].children[i].value = response.media.name;
-
-                        }, function(){
-                            console.log('failed :(');
-                        }, function(progress){
-                            vm.uploadProgress[i] = progress;
-                        });
-            });
-
-        }
-
-    }
-})();
-
-(function () {
     'use strict';
     
     angular
-        .module('admin.watches.edit', [])
+        .module('admin.orders.preview', [])
         .config(config);
 
     config.$inject = ['$stateProvider', '$urlRouterProvider'];
     function config($stateProvider, $urlRouterProvider) {
- 
+
         $stateProvider
-            .state('admin.watches.edit', {
-                url: '/edit/:slug',
-                onEnter: [
-                'ngDialog',
-                'WatchService',
-                '$stateParams',
-                '$state',
-                '$log',
-                function (ngDialog, WatchService, $stateParams, $state, $log) {
-                    getWatch($stateParams.slug);
-    
-                    function getWatch(slug) {
-                        function success(response) {
-                            openDialog(response.data.object);
-                        }
-    
-                        function failed(response) {
-                            $log.error(response);
-                        }
- 
-                        WatchService
-                            .getWatchBySlug(slug)
-                            .then(success, failed);
-                    }
-    
-                    function openDialog(data) {
-    
-                        var options = {
-                            templateUrl: '../views/admin/admin.watches.edit.html',
-                            data: data,
-                            controller: 'AdminWatchesEdit as vm',
-                            showClose: true
-                        };
-    
-                        ngDialog.open(options).closePromise.finally(function () {
-                            $state.go('admin.watches');
-                        });
-                    }
-                }],
+            .state('admin.orders.preview', {
+                url: '/preview/:slug',
                 data: {
                     is_granted: ['ROLE_ADMIN']
-                }
+                },
+                onEnter: [
+                    'ngDialog',
+                    'AdminOrdersService',
+                    '$stateParams',
+                    '$state',
+                    '$log',
+                    function (ngDialog, AdminOrdersService, $stateParams, $state, $log) {
+                        getOrder($stateParams.slug);
+
+                        function getOrder(slug) {
+                            function success(response) {
+                                openDialog(response.data.object);
+                            }
+
+                            function failed(response) {
+                                $log.error(response);
+                            }
+
+                            AdminOrdersService
+                                .getOrderBySlug(slug)
+                                .then(success, failed);
+                        }
+
+                        function openDialog(data) {
+
+                            var options = {
+                                templateUrl: '../views/admin/admin.orders.preview.html',
+                                data: data,
+                                showClose: true
+                            };
+
+                            ngDialog.open(options).closePromise.finally(function () {
+                                $state.go('admin.orders');
+                            });
+                        }
+                    }]
             });
     }
-    
 })();
  
