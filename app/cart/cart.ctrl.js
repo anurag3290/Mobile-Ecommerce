@@ -37,13 +37,13 @@
             if (vm.orderForm.$valid) {
                 handler.open({
                     name: 'Ecommerce App',
-                    description: vm.watches.length + ' Phones',
+                    description: vm.watches.length + ' Courses',
                     amount: vm.totalPrice * 100
                 }).then(function(result) {
                     console.log("Order complete!");
                     $http.post('/charge', {
                         stripeToken: result[0].id,
-                        description: vm.watches.length + ' Phones',
+                        description: vm.watches.length + ' Courses',
                         amount: vm.totalPrice * 100,
                         order: order
                     }).then(function () {

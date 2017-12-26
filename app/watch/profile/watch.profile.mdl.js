@@ -10,7 +10,7 @@
  
         $stateProvider
             .state('main.watch.profile', {
-                url: 'phones/:slug',
+                url: 'courses/:slug',
                 views: {
                     '@main': {
                         templateUrl: '../views/watch/watch.profile.html',

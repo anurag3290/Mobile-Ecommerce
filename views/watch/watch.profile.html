@@ -27,9 +27,9 @@
     <div class="col-md-4">
         <h3>Description</h3>
         <p ng-bind-html="vm.watch.content"></p>
-        <h3>Details</h3>
+        <h3>Details</h3> 
         <table class="table table-bordered">
-            <tr ng-repeat="field in vm.watch.metafields" ng-if="field.key !== 'images'">
+            <tr ng-repeat="field in vm.watch.metafields" ng-if="field.key !== 'images' && field.key !== 'color'">
                 <td><b>{{field.title}}</b></td>
                 <td>{{field.value}}</td>
             </tr>

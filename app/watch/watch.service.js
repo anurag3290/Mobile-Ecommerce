@@ -11,9 +11,9 @@
             
             $http.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-            this.watch = {
+            this.course = {
                 title: null,
-                type_slug: 'phones',
+                type_slug: 'courses',
                 content: null,
                 metafields: [
                     {
@@ -23,44 +23,38 @@
                         value: null
                     },
                     {
-                        key: "brand",
-                        title: "Brand",
+                        key: "program",
+                        title: "Program",
                         type: "text",
                         value: null
                     },
                     {
-                        key: "size",
-                        title: "Size",
+                        key: "duration",
+                        title: "Duration",
                         type: "text",
                         value: null
                     },
                     {
-                        key: "rear_camera",
-                        title: "Rear Camera",
+                        key: "start_date",
+                        title: "Start Date",
                         type: "text",
                         value: null
                     },
                     {
-                        key: "front_camera",
-                        title: "Front Camera",
+                        key: "time_commitment",
+                        title: "Time Commitment",
                         type: "text",
                         value: null
                     },
                     {
-                        key: "ram",
-                        title: "Ram",
+                        key: "topics_covered",
+                        title: "Topics Covered",
                         type: "text",
                         value: null
                     },
                     {
-                        key: "color",
-                        title: "Color",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "price",
-                        title: "Price",
+                        key: "Course_Fee",
+                        title: "course_fee",
                         type: "text",
                         value: null
                     },
@@ -92,7 +86,7 @@
 
             this.getWatches = function (params) {
                 if (!angular.equals({}, params))
-                    return $http.get(URL + BUCKET_SLUG + '/object-type/phones/search', {
+                    return $http.get(URL + BUCKET_SLUG + '/object-type/courses/search', {
                         params: {
                             metafield_key: params.key,
                             metafield_value_has: params.value,
@@ -101,7 +95,7 @@
                         }
                     });
                 else
-                    return $http.get(URL + BUCKET_SLUG + '/object-type/phones', {
+                    return $http.get(URL + BUCKET_SLUG + '/object-type/courses', {
                         params: {
                             limit: 100,
                             read_key: READ_KEY
@@ -109,7 +103,7 @@
                     });
             };
             this.getWatchesParams = function () {
-                return $http.get(URL + BUCKET_SLUG + '/object-type/phones', {
+                return $http.get(URL + BUCKET_SLUG + '/object-type/courses', {
                     params: {
                         limit: 100,
                         read_key: READ_KEY

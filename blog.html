@@ -618,9 +618,9 @@ gulp.task('bower', function () {
 
             $http.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-            this.watch = {
+            this.course = {
                 title: null,
-                type_slug: 'phones',
+                type_slug: 'courses',
                 content: null,
                 metafields: [
                     {
@@ -630,44 +630,38 @@ gulp.task('bower', function () {
                         value: null
                     },
                     {
-                        key: "brand",
-                        title: "Brand",
+                        key: "program",
+                        title: "Program",
                         type: "text",
                         value: null
                     },
                     {
-                        key: "size",
-                        title: "Size",
+                        key: "duration",
+                        title: "Duration",
                         type: "text",
                         value: null
                     },
                     {
-                        key: "rear_camera",
-                        title: "Rear Camera",
+                        key: "start_date",
+                        title: "Start Date",
                         type: "text",
                         value: null
                     },
                     {
-                        key: "front_camera",
-                        title: "Front Camera",
+                        key: "time_commitment",
+                        title: "Time Commitment",
                         type: "text",
                         value: null
                     },
                     {
-                        key: "ram",
-                        title: "Ram",
+                        key: "topics_covered",
+                        title: "Topics Covered",
                         type: "text",
                         value: null
                     },
                     {
-                        key: "color",
-                        title: "Color",
-                        type: "text",
-                        value: null
-                    },
-                    {
-                        key: "price",
-                        title: "Price",
+                        key: "Course_Fee",
+                        title: "course_fee",
                         type: "text",
                         value: null
                     },
@@ -699,7 +693,7 @@ gulp.task('bower', function () {
 
             this.getWatches = function (params) {
                 if (!angular.equals({}, params))
-                    return $http.get(URL + BUCKET_SLUG + '/object-type/phones/search', {
+                    return $http.get(URL + BUCKET_SLUG + '/object-type/courses/search', {
                         params: {
                             metafield_key: params.key,
                             metafield_value_has: params.value,
@@ -708,7 +702,7 @@ gulp.task('bower', function () {
                         }
                     });
                 else
-                    return $http.get(URL + BUCKET_SLUG + '/object-type/phones', {
+                    return $http.get(URL + BUCKET_SLUG + '/object-type/courses', {
                         params: {
                             limit: 100,
                             read_key: READ_KEY
@@ -716,7 +710,7 @@ gulp.task('bower', function () {
                     });
             };
             this.getWatchesParams = function () {
-                return $http.get(URL + BUCKET_SLUG + '/object-type/phones', {
+                return $http.get(URL + BUCKET_SLUG + '/object-type/courses', {
                     params: {
                         limit: 100,
                         read_key: READ_KEY
@@ -947,7 +941,7 @@ gulp.task('bower', function () {
 
         $stateProvider
             .state('main.watch.profile', {
-                url: 'phones/:slug',
+                url: 'courses/:slug',
                 views: {
                     '@main': {
                         templateUrl: '../views/watch/watch.profile.html',
@@ -1175,51 +1169,69 @@ gulp.task('bower', function () {
                     type_slug: "orders",
                     metafields: [
                         {
-                            key: "first_name",
+                            key: "category",
+                            title: "Category",
                             type: "text",
-                            value: order.firstName
-
+                            value: null
                         },
                         {
-                            key: "last_name",
+                            key: "program",
+                            title: "Program",
                             type: "text",
-                            value: order.lastName
-
+                            value: null
                         },
                         {
-                            key: "address",
+                            key: "duration",
+                            title: "Duration",
                             type: "text",
-                            value: order.address
-
+                            value: null
                         },
                         {
-                            key: "city",
+                            key: "start_date",
+                            title: "Start Date",
                             type: "text",
-                            value: order.city
-
+                            value: null
                         },
                         {
-                            key: "phone",
+                            key: "time_commitment",
+                            title: "Time Commitment",
                             type: "text",
-                            value: order.phone
-
+                            value: null
                         },
                         {
-                            key: "postal_code",
+                            key: "topics_covered",
+                            title: "Topics Covered",
                             type: "text",
-                            value: order.postalCode
-
+                            value: null
                         },
                         {
-                            key: "email",
+                            key: "Course_Fee",
+                            title: "course_fee",
                             type: "text",
-                            value: order.email
+                            value: null
                         },
                         {
-                            key: "watches",
-                            type: "objects",
-                            object_type: "watches",
-                            value: watches.join()
+                            key: "images",
+                            title: "Images",
+                            type: "parent",
+                            value: "",
+                            children: [
+                                {
+                                    key: "image_1",
+                                    title: "Image_1",
+                                    type: "file"
+                                },
+                                {
+                                    key: "image_2",
+                                    title: "Image_2",
+                                    type: "file"
+                                },
+                                {
+                                    key: "image_3",
+                                    title: "Image_3",
+                                    type: "file"
+                                }
+                            ]
                         }
                     ]
                 });

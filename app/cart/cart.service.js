@@ -82,51 +82,69 @@
                     type_slug: "orders",
                     metafields: [
                         {
-                            key: "first_name",
+                            key: "category",
+                            title: "Category",
                             type: "text",
-                            value: order.firstName
-
+                            value: null
                         },
                         {
-                            key: "last_name",
+                            key: "program",
+                            title: "Program",
                             type: "text",
-                            value: order.lastName
-
+                            value: null
                         },
                         {
-                            key: "address",
+                            key: "duration",
+                            title: "Duration",
                             type: "text",
-                            value: order.address
-
+                            value: null
                         },
                         {
-                            key: "city",
+                            key: "start_date",
+                            title: "Start Date",
                             type: "text",
-                            value: order.city
-
+                            value: null
                         },
                         {
-                            key: "phone",
+                            key: "time_commitment",
+                            title: "Time Commitment",
                             type: "text",
-                            value: order.phone
-
+                            value: null
                         },
                         {
-                            key: "postal_code",
-                            type: "text", 
-                            value: order.postalCode
-
-                        },
-                        {
-                            key: "email",
+                            key: "topics_covered",
+                            title: "Topics Covered",
                             type: "text",
-                            value: order.email
+                            value: null
                         },
                         {
-                            key: "watches",
-                            type: "objects",
-                            object_type: "watches",
-                            value: watches.join()
+                            key: "Course_Fee",
+                            title: "course_fee",
+                            type: "text",
+                            value: null
+                        },
+                        {
+                            key: "images",
+                            title: "Images",
+                            type: "parent",
+                            value: "",
+                            children: [
+                                {
+                                    key: "image_1",
+                                    title: "Image_1",
+                                    type: "file"
+                                },
+                                {
+                                    key: "image_2",
+                                    title: "Image_2",
+                                    type: "file"
+                                },
+                                {
+                                    key: "image_3",
+                                    title: "Image_3",
+                                    type: "file"
+                                }
+                            ]
                         }
                     ]
                 });
